@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>掃描條碼</title>
+  <style>
+    body { background: #000; color: #fff; text-align: center; font-family: sans-serif; }
+    video { width: 100%; height: auto; margin-top: 20px; }
+    #msg { margin-top: 20px; font-size: 20px; }
+  </style>
+</head>
+<body>
+
+<h2>掃描條碼 / QRCode</h2>
+<video id="video" autoplay></video>
+<div id="msg">相機啟動中…</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+  async function start() {
+    await liff.init({ liffId: "你的_LIFF_ID" });
+
+    if (!liff.isInClient()) {
+      document.getElementById("msg").innerText = "請在 LINE 中開啟此頁面";
+      return;
+    }
+
+    const video = document.getElementById("video");
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    video.srcObject = stream;
+
+    const barcodeDetector = new BarcodeDetector({ formats: ["qr_code", "code_128", "ean_13", "ean_8"] });
+
+    setInterval(async () => {
+      try {
+        const barcodes = await barcodeDetector.detect(video);
+        if (barcodes.length > 0) {
+          const code = barcodes[0].rawValue;
+
+          document.getElementById("msg").innerText = "掃描成功：" + code;
+
+          await liff.sendMessages([
+            { type: "text", text: code }
+          ]);
+
+          liff.closeWindow();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 300);
+  }
+
+  start();
+</script>
+
+</body>
+</html>
