@@ -12,19 +12,15 @@
       margin: 0;
       padding: 0;
     }
-    #btn {
-      margin-top: 200px;
-      padding: 20px 40px;
-      background: #00b900;
-      color: #fff;
-      font-size: 22px;
-      border-radius: 10px;
-      border: none;
+    h2 {
+      margin-top: 40px;
+      font-size: 24px;
     }
   </style>
 </head>
 <body>
 
+<h2>掃描中…</h2>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
@@ -36,20 +32,19 @@
       return;
     }
 
-    document.getElementById("btn").onclick = async () => {
-      try {
-        const result = await liff.scanCodeV2();
-        const code = result.value;
+    try {
+      // 直接啟動掃描器（無需按按鈕）
+      const result = await liff.scanCodeV2();
+      const code = result.value;
 
-        await liff.sendMessages([
-          { type: "text", text: code }
-        ]);
+      await liff.sendMessages([
+        { type: "text", text: code }
+      ]);
 
-        liff.closeWindow();
-      } catch (err) {
-        alert("掃描失敗：" + err);
-      }
-    };
+      liff.closeWindow();
+    } catch (err) {
+      alert("掃描失敗：" + err);
+    }
   }
 
   start();
