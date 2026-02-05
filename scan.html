@@ -25,25 +25,34 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
   async function start() {
-    await liff.init({ liffId: "2009029194-tbi6gX1Y" });
+    await liff.init({ liffId: "你的_LIFF_ID" });
 
     if (!liff.isInClient()) {
       alert("請在 LINE 中開啟此頁面");
       return;
     }
 
-    try {
-      // 直接啟動掃描器（無需按按鈕）
-      const result = await liff.scanCodeV2();
-      const code = result.value;
+    while (true) {
+      try {
+        // 直接啟動掃描器
+        const result = await liff.scanCodeV2();
+        const code = result.value;
 
-      await liff.sendMessages([
-        { type: "text", text: code }
-      ]);
+        // 傳訊息給 LINE Bot
+        await liff.sendMessages([
+          { type: "text", text: code }
+        ]);
 
-      liff.closeWindow();
-    } catch (err) {
-      alert("掃描失敗：" + err);
+        // 掃成功 → 自動關閉 LIFF
+        liff.closeWindow();
+        return;
+
+      } catch (err) {
+        // 掃描失敗（使用者取消 / 沒掃到）
+        // 不關閉、不跳錯，繼續等待下一次掃描
+        // iPhone 的 scanCodeV2() 會在取消時丟錯誤
+        // 我們只要重新進入下一輪 while(true) 即可
+      }
     }
   }
 
