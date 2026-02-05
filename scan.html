@@ -4,9 +4,28 @@
   <meta charset="utf-8">
   <title>掃描條碼</title>
   <style>
-    body { background: #000; color: #fff; text-align: center; font-family: sans-serif; }
-    video { width: 100%; height: auto; margin-top: 20px; }
-    #msg { margin-top: 20px; font-size: 20px; }
+    body {
+      background: #000;
+      color: #fff;
+      text-align: center;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    h2 {
+      margin-top: 20px;
+      font-size: 24px;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      margin-top: 10px;
+    }
+    #msg {
+      margin-top: 20px;
+      font-size: 18px;
+      padding: 10px;
+    }
   </style>
 </head>
 <body>
@@ -18,37 +37,63 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
   async function start() {
+    const msg = document.getElementById("msg");
+
+    msg.innerText = "初始化 LIFF…";
+
+    // 初始化 LIFF
     await liff.init({ liffId: "2009029194-tbi6gX1Y" });
 
+    // 必須在 LINE 內開啟
     if (!liff.isInClient()) {
-      document.getElementById("msg").innerText = "請在 LINE 中開啟此頁面";
+      msg.innerText = "請在 LINE 中開啟此頁面";
       return;
     }
 
+    // 檢查裝置是否支援 BarcodeDetector
+    if (!("BarcodeDetector" in window)) {
+      msg.innerText = "此裝置不支援條碼掃描";
+      return;
+    }
+
+    // 支援多種條碼格式
+    const formats = [
+      "qr_code", "code_128", "code_39", "code_93",
+      "ean_13", "ean_8", "upc_a", "itf", "codabar"
+    ];
+
+    const barcodeDetector = new BarcodeDetector({ formats });
+
+    msg.innerText = "相機啟動中…";
+
+    // 啟動相機（後鏡頭）
     const video = document.getElementById("video");
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }
+    });
     video.srcObject = stream;
 
-    const barcodeDetector = new BarcodeDetector({ formats: ["qr_code", "code_128", "ean_13", "ean_8"] });
-
+    // 每 500ms 偵測一次
     setInterval(async () => {
       try {
         const barcodes = await barcodeDetector.detect(video);
         if (barcodes.length > 0) {
           const code = barcodes[0].rawValue;
 
-          document.getElementById("msg").innerText = "掃描成功：" + code;
+          msg.innerText = "掃描成功：" + code;
 
+          // 傳訊息給 LINE Bot
           await liff.sendMessages([
             { type: "text", text: code }
           ]);
 
+          // 關閉 LIFF
           liff.closeWindow();
         }
       } catch (err) {
-        console.error(err);
+        msg.innerText = "偵測中…";
       }
-    }, 300);
+    }, 500);
   }
 
   start();
